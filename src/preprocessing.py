@@ -12,10 +12,7 @@ from typing import Dict, Optional
 from transformers import AutoTokenizer
 
 
-# -------------------------------------------------------------------
-# TEXT CLEANING + NORMALIZATION
-# -------------------------------------------------------------------
-
+#cleaning text and normalizing it
 def clean_text(text: Optional[str]) -> str:
     """
     Clean and normalize text for both resume and job description.
@@ -40,10 +37,6 @@ def clean_text(text: Optional[str]) -> str:
 
     return text.strip()
 
-
-# -------------------------------------------------------------------
-# RESUME SECTION HEURISTICS (OPTIONAL)
-# -------------------------------------------------------------------
 
 def segment_resume(resume_text: str) -> Dict[str, str]:
     """
@@ -97,11 +90,6 @@ def segment_resume(resume_text: str) -> Dict[str, str]:
             sections["other"] += "\n" + segment
 
     return sections
-
-
-# -------------------------------------------------------------------
-# TOKENIZER LOADER (CRITICAL)
-# -------------------------------------------------------------------
 
 def get_tokenizer(model_name: str):
     tokenizer = AutoTokenizer.from_pretrained(

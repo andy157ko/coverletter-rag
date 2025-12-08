@@ -9,7 +9,6 @@ import streamlit as st
 import sys
 from pathlib import Path
 
-# Add project root to path
 ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -41,12 +40,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Header
-st.markdown('<h1 class="main-header">📝 AI Cover Letter Generator</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header"> AI Cover Letter Generator</h1>', unsafe_allow_html=True)
 st.markdown("---")
 
-# Sidebar with instructions
+
 with st.sidebar:
-    st.header("ℹ️ How to Use")
+    st.header("ℹ How to Use")
     st.markdown("""
     1. **Paste your resume** in the left text area
     2. **Paste the job description** in the right text area
@@ -69,7 +68,7 @@ with st.sidebar:
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("📄 Your Resume")
+    st.subheader("Your Resume")
     resume_text = st.text_area(
         "Paste your resume text here:",
         height=400,
@@ -92,9 +91,9 @@ Personal Portfolio Website
     )
 
 with col2:
-    st.subheader("💼 Job Description")
+    st.subheader("Job Description")
     job_text = st.text_area(
-        "Paste the job description here:",
+        "Paste the job description of the company here:",
         height=400,
         placeholder="""Example:
 Software Engineer Intern
@@ -121,7 +120,7 @@ col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 
 with col_btn2:
     generate_button = st.button(
-        "🚀 Generate Cover Letter",
+        "Generate Cover Letter",
         type="primary",
         use_container_width=True,
         help="Click to generate your personalized cover letter"
@@ -130,18 +129,18 @@ with col_btn2:
 # Generation and display
 if generate_button:
     if not resume_text.strip():
-        st.error("⚠️ Please paste your resume text in the left column.")
+        st.error("Please paste your resume text in the left column.")
     elif not job_text.strip():
-        st.error("⚠️ Please paste the job description in the right column.")
+        st.error("Please paste the job description in the right column.")
     else:
-        with st.spinner("🤖 Generating your cover letter... This may take 30-60 seconds."):
+        with st.spinner("Generating your cover letter... This may take 30-60 seconds."):
             try:
                 # Generate cover letter
                 cover_letter = generate_rag_lora_model(resume_text, job_text)
                 
                 # Display result
                 st.markdown("---")
-                st.subheader("✨ Your Generated Cover Letter")
+                st.subheader("Your Generated Cover Letter")
                 
                 # Text area for easy copying
                 st.text_area(
@@ -153,7 +152,7 @@ if generate_button:
                 
                 # Download button
                 st.download_button(
-                    label="📥 Download as .txt",
+                    label="Download as .txt",
                     data=cover_letter,
                     file_name="cover_letter.txt",
                     mime="text/plain",
@@ -161,18 +160,18 @@ if generate_button:
                 )
                 
                 # Success message
-                st.success("✅ Cover letter generated successfully! Review it above and make any edits you'd like.")
+                st.success("Cover letter generated successfully! Review it above and make any edits you'd like.")
                 
             except FileNotFoundError as e:
-                st.error(f"❌ Model files not found. Please make sure you've trained the model first.\n\nError: {str(e)}")
+                st.error(f"Model files not found. Please make sure you've trained the model first.\n\nError: {str(e)}")
             except Exception as e:
-                st.error(f"❌ An error occurred while generating the cover letter:\n\n{str(e)}")
-                st.info("💡 Make sure you've run:\n1. `python scripts/build_original_dataset.py`\n2. `python scripts/build_embeddings.py`\n3. `python src/train.py`")
+                st.error(f"An error occurred while generating the cover letter:\n\n{str(e)}")
+                st.info("Make sure you've run:\n1. `python scripts/build_original_dataset.py`\n2. `python scripts/build_embeddings.py`\n3. `python src/train.py`")
 
 # Footer
 st.markdown("---")
 st.markdown(
-    "<div style='text-align: center; color: #666;'>Built with ❤️ using RAG + LoRA</div>",
+    "<div style='text-align: center; color: #666;'>Built using RAG + LoRA</div>",
     unsafe_allow_html=True
 )
 

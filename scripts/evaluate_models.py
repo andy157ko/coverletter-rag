@@ -15,7 +15,7 @@ Outputs:
 
 import json
 from pathlib import Path
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Tuple
 
 import sys
 
@@ -56,6 +56,48 @@ def load_test_data(path: Path) -> List[Dict]:
     return records
 
 
+def parse_job_and_resume(input_text: str) -> Tuple[str, str]:
+    """
+    Given the instruction-style `input` string produced by build_original_dataset.py,
+    recover the `job_text` and `resume_text`.
+
+    Expected pattern (from build_instruction_example):
+
+        "JOB DESCRIPTION:\\n"
+        {job_text}
+        "\\n\\nRESUME:\\n"
+        {resume_text}
+        "\\n\\nWrite a 3–5 paragraph cover letter..."
+
+    We split on these markers robustly.
+    """
+    job_text = ""
+    resume_text = ""
+
+    try:
+        # Split after "JOB DESCRIPTION:\n"
+        after_job = input_text.split("JOB DESCRIPTION:\n", 1)[1]
+
+        # job_text ends right before "\n\nRESUME:\n"
+        job_text_part, after_resume_marker = after_job.split("\n\nRESUME:\n", 1)
+        job_text = job_text_part.strip()
+
+        # resume_text ends before the next "\n\nWrite" (instructions)
+        if "\n\nWrite" in after_resume_marker:
+            resume_text_part, _ = after_resume_marker.split("\n\nWrite", 1)
+        else:
+            # Fallback if format slightly differs
+            resume_text_part = after_resume_marker
+        resume_text = resume_text_part.strip()
+    except Exception:
+        # If parsing fails for any reason, just return empty strings;
+        # downstream metrics will treat them as low-similarity.
+        job_text = ""
+        resume_text = ""
+
+    return job_text, resume_text
+
+
 def cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
     denom = (np.linalg.norm(a) * np.linalg.norm(b))
     if denom == 0.0:
@@ -76,7 +118,9 @@ def evaluate_system(
     - Job relevance (sim(gen, job_text))
     - Resume alignment (sim(gen, resume_text))
 
-    Returns a metrics dict.
+    `records` come from the new processed format:
+      ex["input"]  = full instruction prompt
+      ex["output"] = reference cover letter
     """
 
     all_rouge_preds = []
@@ -86,11 +130,12 @@ def evaluate_system(
     resume_alignment_scores = []
 
     for ex in tqdm(records, desc=f"Evaluating {name}"):
-        resume_text = ex["resume_text"]
-        job_text = ex["job_text"]
-        ref_letter = ex["cover_letter_text"]
+        input_prompt = ex["input"]
+        ref_letter = ex["output"]
 
-        # Generate with the given system
+        job_text, resume_text = parse_job_and_resume(input_prompt)
+
+        # Generate with the given system (API expects resume_text, job_text)
         gen_letter = generator_fn(resume_text, job_text)
 
         # 1) ROUGE-L
@@ -113,7 +158,6 @@ def evaluate_system(
         rouge_types=["rougeL"],
         use_stemmer=True,
     )
-    # In this version of `evaluate`, rouge_result["rougeL"] is already a float
     rougeL_score = float(rouge_result["rougeL"])
 
     metrics = {
@@ -138,8 +182,6 @@ def collect_qualitative_examples(
     - job_text
     - reference (ground truth cover letter)
     - generated (model output)
-
-    Useful for error analysis and qualitative discussion.
     """
     import random
 
@@ -150,9 +192,10 @@ def collect_qualitative_examples(
     examples = []
 
     for ex in sampled:
-        resume_text = ex["resume_text"]
-        job_text = ex["job_text"]
-        ref_letter = ex["cover_letter_text"]
+        input_prompt = ex["input"]
+        ref_letter = ex["output"]
+
+        job_text, resume_text = parse_job_and_resume(input_prompt)
         gen_letter = generator_fn(resume_text, job_text)
 
         examples.append({

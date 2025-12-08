@@ -135,6 +135,12 @@ def clean_and_filter_sentences(text: str) -> str:
             continue
         if re.search(r"\byears of experience\b", s_strip, flags=re.IGNORECASE):
             continue
+        if re.search(r"writing to express my interest in", s_strip, flags=re.IGNORECASE):
+            continue
+        if re.search(r"\bposition at\b", s_strip, flags=re.IGNORECASE) and re.search(r"\bI am\b", s_strip, flags=re.IGNORECASE):
+            continue
+        if re.search(r"\bI am excited to apply\b", s_strip, flags=re.IGNORECASE):
+            continue
 
         keep.append(s_strip)
 
@@ -350,6 +356,8 @@ class RAGPipeline:
             f"   - Job title guess: '{job_title}'\n"
             f"   - Company guess: '{job_company}'\n"
             "3. You MUST NOT invent degrees, companies, or experience that are not in the TARGET RESUME.\n"
+            "   You may ONLY mention degrees, majors, or school names if the exact string appears in the TARGET RESUME.\n"
+            "   If you are unsure, do NOT mention degrees or school names at all.\n"
             "4. Do NOT claim specific years of experience unless they are explicitly stated.\n"
             "5. VERY IMPORTANT: Do NOT mention tools, programming languages, or software that do not appear "
             "in the TARGET RESUME bullet list below.\n\n"
@@ -387,6 +395,7 @@ class RAGPipeline:
         Full RAG + generation + light post-processing, with a
         rule-based fallback if the model output is low quality.
         """
+        print(">>> USING RAG PIPELINE V3 <<<")
         resume_bullets = extract_resume_bullets(resume_text)
         job_title, job_company = extract_title_and_company(job_text)
 
@@ -423,7 +432,7 @@ class RAGPipeline:
 
         raw_stripped = raw_text.strip()
         word_count = len(raw_stripped.split())
-        too_short = word_count < 40
+        too_short = word_count < 100
         looks_like_header = raw_stripped.lower().startswith("hiring company:")
         mentions_training_company = bool(
             re.search(r"\b(XYZ Analytics|Innovation Inc)\b", raw_stripped)

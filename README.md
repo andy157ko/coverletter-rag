@@ -31,6 +31,11 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 ```
+If you want the web-based version, run
+```
+setup_env.sh
+run_streamlit.sh
+```
 ### 2. Build Embeddings + FAISS Index
 ```
 python scripts/build_embeddings.py
@@ -86,9 +91,9 @@ python scripts/run_demo_cli.py
 
 | System | ROUGE-L | Resume Similarity | Job Similarity |
 |--------|---------|-------------------|----------------|
-| Template | 0.215 | 0.63 | 0.58 |
-| Prompt-Only | 0.271 | 0.68 | 0.61 |
-| RAG + LoRA | 0.324 | 0.79 | 0.75 |
+| Template | 0.32 | 0.79 | 0.74 |
+| Prompt-Only | 0.00 | 0.11 | 0.07 |
+| RAG + LoRA | 0.27 | 0.59 | 0.53 |
 
 ### Qualitative Observations
 - Retrieval provides strong grounding in resume content  

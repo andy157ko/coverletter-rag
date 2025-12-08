@@ -28,36 +28,16 @@ from src.models import load_base_model, apply_lora
 
 def build_collate_fn(tokenizer, max_input_length: int, max_target_length: int):
     """
-    Collate function for cover-letter dataset:
-    - builds input_text from job_text + resume_text
-    - tokenizes inputs / targets
-    - masks pad tokens in labels with -100 for loss computation
-
-    We bind tokenizer to a local variable `tok` to avoid any accidental
-    shadowing or mutation.
+    Collate function for INSTRUCTION-TUNED dataset:
+      - ex["input"]  = FULL constructed prompt
+      - ex["output"] = target cover letter
     """
 
-    tok = tokenizer  # bind to local name, never mutated
+    tok = tokenizer
 
     def collate_fn(batch):
-        input_texts = []
-        target_texts = []
-
-        for ex in batch:
-            job_text = ex["job_text"]
-            resume_text = ex["resume_text"]
-            cover_letter_text = ex["cover_letter_text"]
-
-            # Build the input prompt
-            input_text = (
-                "You are an assistant that writes tailored cover letters for job applications.\n\n"
-                f"JOB:\n{job_text}\n\n"
-                f"RESUME:\n{resume_text}\n\n"
-                "TASK:\nWrite a professional, concise cover letter for this job based on the resume."
-            )
-
-            input_texts.append(input_text)
-            target_texts.append(cover_letter_text)
+        input_texts = [ex["input"] for ex in batch]
+        target_texts = [ex["output"] for ex in batch]
 
         # Tokenize inputs
         model_inputs = tok(
@@ -68,7 +48,7 @@ def build_collate_fn(tokenizer, max_input_length: int, max_target_length: int):
             return_tensors="pt",
         )
 
-        # Tokenize targets
+        # Tokenize outputs
         with tok.as_target_tokenizer():
             labels = tok(
                 target_texts,
@@ -78,13 +58,14 @@ def build_collate_fn(tokenizer, max_input_length: int, max_target_length: int):
                 return_tensors="pt",
             )["input_ids"]
 
-        # Replace padding token id's in labels by -100 for loss to ignore them
+        # Mask padding tokens
         labels[labels == tok.pad_token_id] = -100
 
         model_inputs["labels"] = labels
         return model_inputs
 
     return collate_fn
+
 
 
 def train(config: TrainingConfig, data_config: DataConfig, config_name: str = "rag_lora"):
