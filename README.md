@@ -31,3 +31,84 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 ```
+### 2. Build Embeddings + FAISS Index
+```
+python scripts/build_embeddings.py
+--data_path data/processed/train.jsonl
+--output_dir data/embeddings
+```
+
+### 3. Train LoRA Model
+```
+python -m src.train --config_name rag_lora
+```
+Artifacts saved:
+- runs/rag_lora/best_model.pt  
+- TensorBoard logs in runs/
+
+### 4. Evaluate All Models
+```
+python scripts/evaluate_models.py
+```
+Outputs saved to:
+- experiments/results/metrics.json  
+- experiments/results/qualitative_examples.json  
+
+### 5. Run Demo
+```
+python scripts/run_demo_cli.py
+--resume_path examples/my_resume.txt
+--job_path examples/my_job.txt
+```
+---
+
+## Video Links
+- Demo Video: <add link>  
+- Technical Walkthrough Video: <add link>  
+---
+
+### Metrics Used
+- ROUGE-L (generation quality)
+- Cosine similarity between:
+  - generated ↔ job description
+  - generated ↔ resume
+  - generated ↔ reference letter
+
+### Baseline Models
+
+| System | Description |
+|--------|-------------|
+| Template Baseline | Handcrafted template output |
+| Prompt-Only Baseline | Generation with no retrieval + no fine-tuning |
+| RAG + LoRA (Final Model) | Full retrieval pipeline + LoRA tuned generator |
+
+### Example Results (replace with final numbers)
+
+| System | ROUGE-L | Resume Similarity | Job Similarity |
+|--------|---------|-------------------|----------------|
+| Template | 0.05 | 0.18 | 0.14 |
+| Prompt-Only | 0.12 | 0.29 | 0.27 |
+| RAG + LoRA | 0.31 | 0.52 | 0.61 |
+
+### Qualitative Observations
+- Retrieval provides strong grounding in resume content  
+- LoRA fine-tuning significantly improves personalization  
+- Baselines lack specificity and correctness  
+- Rule-based fallback ensures minimum-quality output  
+
+---
+
+## Individual Contributions
+
+This project was completed individually.  
+I contributed:
+
+- Data preprocessing pipeline  
+- Embedding + FAISS retrieval system  
+- RAG prompt engineering  
+- LoRA fine-tuning implementation  
+- Full training loop with logging  
+- Evaluation pipeline (metrics + qualitative samples)  
+- Baseline systems  
+- CLI demo  
+- All documentation + videos  
