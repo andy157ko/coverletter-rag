@@ -1,16 +1,33 @@
-# CoverLetterRAG: Resume-Aware Cover Letter Generator
+# CoverLetter-RAG: Retrieval-Augmented Cover Letter Generation with LoRA-Fine-Tuned T5
+
+A retrieval-augmented machine learning system that generates personalized cover letters using a user’s resume and job description. The system fine-tunes a T5 model with LoRA, retrieves semantically similar examples with FAISS, and constructs a structured RAG prompt for high-quality, grounded cover letter generation.
+
+---
 
 ## What it Does
 
-This project helps students generate tailored cover letters from their resumes and target job descriptions. It uses a retrieval-augmented generation (RAG) pipeline with pretrained transformer language models from HuggingFace, grounding each letter in the student's actual experiences and similar past examples.
+This project implements an end-to-end Retrieval-Augmented Generation pipeline for personalized cover letter generation. The system:
+
+- Builds a dataset of resume/job/cover-letter triples  
+- Preprocesses text and constructs embeddings  
+- Builds a FAISS vector index for semantic retrieval  
+- Fine-tunes a T5 model using LoRA for efficient SFT  
+- Generates cover letters using retrieved examples + structured prompting  
+- Includes baselines and full evaluation pipeline  
+- Provides a CLI demo that takes resume + job text and outputs a full cover letter  
+
+---
 
 ## Quick Start
 
-1. Clone the repository and create an environment:
+### 1. Installation
 
-```bash
-git clone <YOUR_REPO_URL>.git
+```
+git clone <your-repo-url>
 cd coverletter-rag
-python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+
+python3 -m venv .venv
+source .venv/bin/activate
+
 pip install -r requirements.txt
+```
