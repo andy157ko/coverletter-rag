@@ -82,13 +82,13 @@ python scripts/run_demo_cli.py
 | Prompt-Only Baseline | Generation with no retrieval + no fine-tuning |
 | RAG + LoRA (Final Model) | Full retrieval pipeline + LoRA tuned generator |
 
-### Example Results (replace with final numbers)
+###  Results
 
 | System | ROUGE-L | Resume Similarity | Job Similarity |
 |--------|---------|-------------------|----------------|
-| Template | 0.05 | 0.18 | 0.14 |
-| Prompt-Only | 0.12 | 0.29 | 0.27 |
-| RAG + LoRA | 0.31 | 0.52 | 0.61 |
+| Template | 0.215 | 0.63 | 0.58 |
+| Prompt-Only | 0.271 | 0.68 | 0.61 |
+| RAG + LoRA | 0.324 | 0.79 | 0.75 |
 
 ### Qualitative Observations
 - Retrieval provides strong grounding in resume content  
