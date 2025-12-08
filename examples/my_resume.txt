@@ -1,0 +1,44 @@
+Andrew (Andy) Ko
+
+andy.ko@duke.edu | (224) 315 3774 | https://www.linkedin.com/in/andyhyunko 
+
+EDUCATION
+Duke University - B.Eng. Electrical and Computer Engineering & Computer Science	May 2027
+Relevant Coursework: Applied Product Management, Applied Machine Learning, Database Systems, Algorithmic Probability, Computer Architecture, Design and Analysis of Algorithms
+
+EXPERIENCE
+Engineering Project Management Intern - Burlington Stores	June 2025 - August 2025
+Delivered ROI analysis on an $850K shuttle relief capex for expansion of racetrack tote capacity and increased labor utilization at the PTL station by ~50%, directly improving warehouse throughput while simultaneously overseeing implementation and rollout of multiple operational efficiency projects, ensuring they hit scope, schedule, and budget targets
+Owned vendor sourcing / bid process (quotes, sketches, cost models) and selected optimal vendor, cutting ROI payback period by 20% while preserving design integrity, safety, and performance specifications
+Drafted the full Capital Expenditure Report (CER) presented to the CapEx committee including the CFO, influencing investment decision-making
+
+Software Development Intern - Scale Social AI	May 2025 - August 2025
+Increased session duration by 35% and improved product usability / satisfaction by engineering Firestore to cloud storage sync and custom asset views for clients
+Drove full experiment pipeline (implementation, QA, A/B testing) across 3+ feature releases, using data-backed validation to guide ship decisions and deliver an average 15% lift in user engagement before launch
+Built metadata automation (tags, campaign links, usage flags) across React Native + Python + JS, enabling more accurate content targeting and analytics
+
+Technology Consultant - Organization for Economic Co-operation and Development (OECD)	May 2024 - August 2024
+Developed a governance framework with 10 targeted reforms to strengthen safety governance, and oversight in synthetic biology and AI systems to inform future OECD reports through market analysis and technology landscape research 
+Collaborated with graduate researchers and Duke Science & Society to assess ethical policy implications of emerging tech, driving bi-weekly stakeholder reviews with OECD staff to align product, policy, and technical requirements for implementation decisions
+Conducted expert interviews with senior industry leaders, including the CTO of a Fortune 500 company and executives from leading AI and synthetic biology firms, to gather insights shaping governance frameworks and product strategy recommendations
+
+Product Manager - LactoLevel	August 2023 - December 2023
+Led a 4-person cross functional team (hardware and software) to address the lack of real-time visibility in breast milk collection, designing and building a functional prototype from concept that provided instant volume feedback to users
+Maximized user trust, safety, and comfort by engineering iterative hardware prototypes and launching a real-time web dashboard that visualized device performance and status
+Voted Most Innovative Product at Duke’s engineering showcase amongst 40+ projects
+ 
+EXTRACURRICULAR 
+Duke Catalyst - President, Vice President, Social Chair	January 2024 – Current
+Overhauled member education by building a new curriculum (weekly project sprints) that improved selectivity (30 accepted from 300+) and increased individual contributor build velocity (avg. 1 hackathon-ready project per team per semester)
+Scaled member + alumni experience: launched incentive + touchpoint programs that drove +35% member retention and +50% alumni engagement across 100+ members 
+Funded future programming needs in membership engagement and project initiative cost by securing Catalyst’s first-ever external corporate sponsorship, negotiating partnership terms and value alignment with Visa, Palantir, Ramp, SpaceX and more to establish a repeatable funding model
+
+HackDuke - Sponsorship Strategy Team	January 2024 – Current
+Sourced and pitched to 30+ target companies (FAANG + late-stage startups) leading to a 23% lift in sponsorship pipeline YoY and helping secure cash and credits worth >$15K in 2024
+Improved cold-to-warm sponsor conversion rate by ~18pp by developing a tiered sponsorship benefits and pricing model and running segmented CRM outreach cadences that reduced average response latency from 5.4 to 2.1 days
+
+ADDITIONAL SKILLS
+Technical Skills: JavaScript, Python, SQL, Node.js, PyTorch, Firebase/Firestore, Git, React, Figma, MATLAB, Autodesk Fusion 360
+Product: Product Strategy, Roadmapping, Experiment Design (A/B), User Research, Agile Execution, KPI Instrumentation
+Data: Excel (advanced modeling and pivots), Tableau/Looker
+Interests: Classical music, Dance, Movies

@@ -1,0 +1,49 @@
+Product Management Intern – IBM Infrastructure
+About the job
+Introduction
+
+IBM Infrastructure is a catalyst that makes the world work better because our clients demand it. Heterogeneous environments, the explosion of data, digital automation, and cybersecurity threats require hybrid cloud infrastructure that only IBM can provide.
+
+Your ability to be creative, a forward-thinker and to focus on innovation that matters, is all support by our growth minded culture as we continue to drive career development across our teams. Collaboration is key to IBM Infrastructure success, as we bring together different business units and teams that balance their priorities in a way that best serves our client's needs.
+
+IBM's product and technology landscape includes Research, Software, and Infrastructure. Entering this domain positions you at the heart of IBM, where growth and innovation thrive.
+
+Your Role And Responsibilities
+
+What you’ll do
+
+ Perform market research, customer research, and competitive analysis to identify new market opportunities
+ Understand our customers and key industries
+ Collaborate with Engineering, Sales, Marketing, Finance etc.
+ Identify and evaluate user requirements to uncover actionable product insights
+ Help translate complex technical capabilities into clear product requirements and user stories
+
+About You
+
+ Currently pursuing a relevant college degree
+ Excellent written and verbal communicator with attention to detail
+ Able to be decisive, even with incomplete information
+ Known for consistent execution and completion of tasks
+ Self-motivated and resourceful, with the judgment to seek input when appropriate
+ Thrive in multidisciplinary environments, fostering productive collaboration
+
+Preferred Education
+
+Bachelor's Degree
+
+Required Technical And Professional Expertise
+
+ Currently enrolled in a Bachelor’s or Master’s program in Business, Computer Science, Engineering, or related field.
+ Strong analytical and problem-solving skills with the ability to interpret data and derive actionable insights.
+ Excellent written and verbal communication skills
+ Ability to work collaboratively in a team environment and manage multiple tasks in a fast-paced setting.
+ Proficiency in Microsoft Office tools (Excel, PowerPoint, Word) for reporting and analysis
+ Proficiency in AI tools
+
+Preferred Technical And Professional Experience
+
+ Familiarity with enterprise storage technologies (block, file, object)
+ Exposure to AI/ML workloads, containerization (Kubernetes, Docker), or data-intensive applications as they relate to storage
+ Understanding of cloud computing models (public, private, hybrid) and their impact on storage solutions
+ Experience with market research, competitive analysis, or product lifecycle management.
+ Knowledge of hardware and software development concepts

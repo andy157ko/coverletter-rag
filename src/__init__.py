@@ -1,0 +1,2 @@
+"""Cover Letter RAG package."""
+
