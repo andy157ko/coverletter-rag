@@ -31,12 +31,8 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 ```
-If you want the web-based version, run
-```
-setup_env.sh
-run_streamlit.sh
-```
-### 2. Build Embeddings + FAISS Index
+
+### 2. Build Embeddings + FAISS Index (Do Not do step 2,3,4 without data! If you just want to run the model with my currently trained model skip to step 5)
 ```
 python scripts/build_embeddings.py
 --data_path data/processed/train.jsonl
@@ -64,6 +60,11 @@ Outputs saved to:
 python scripts/run_demo_cli.py
 --resume_path examples/my_resume.txt
 --job_path examples/my_job.txt
+```
+To see web-based version
+```
+setup_env.sh
+run_streamlit.sh
 ```
 ---
 
