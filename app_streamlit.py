@@ -154,10 +154,47 @@ if generate_button:
                 st.success("Cover letter generated successfully! Review it above and make any edits you'd like.")
                 
             except FileNotFoundError as e:
-                st.error(f"Model files not found. Please make sure you've trained the model first.\n\nError: {str(e)}")
+                error_msg = str(e)
+                if "best_model.pt" in error_msg:
+                    st.error("""
+                    **Model file not found on Streamlit Cloud!**
+                    
+                    The trained model file (951MB) is not in your GitHub repository because it's ignored by `.gitignore`.
+                    
+                    **To fix this for Streamlit Cloud deployment:**
+                    1. **Upload model to HuggingFace Hub** (recommended), OR
+                    2. **Use Git LFS** to store the model file in your repo
+                    
+                    See `STREAMLIT_CLOUD_SETUP.md` for detailed instructions.
+                    """)
+                elif "faiss_index.bin" in error_msg or "metadata.jsonl" in error_msg:
+                    st.warning("FAISS index not found. Attempting to build it...")
+                    try:
+                        import subprocess
+                        result = subprocess.run(
+                            [sys.executable, "scripts/build_embeddings.py"],
+                            capture_output=True,
+                            text=True,
+                            timeout=300
+                        )
+                        if result.returncode == 0:
+                            st.success("FAISS index built successfully! Please try generating again.")
+                            st.rerun()
+                        else:
+                            st.error(f"Failed to build FAISS index: {result.stderr}")
+                    except Exception as build_error:
+                        st.error(f"Could not build FAISS index: {str(build_error)}")
+                        st.info("Make sure you've run `python scripts/build_original_dataset.py` first.")
+                else:
+                    st.error(f"File not found: {error_msg}")
             except Exception as e:
                 st.error(f"An error occurred while generating the cover letter:\n\n{str(e)}")
-                st.info("Make sure you've run:\n1. `python scripts/build_original_dataset.py`\n2. `python scripts/build_embeddings.py`\n3. `python src/train.py`")
+                st.info("""
+                **Troubleshooting:**
+                1. Check Streamlit Cloud logs for detailed error messages
+                2. Ensure all required files are in your repository
+                3. See `STREAMLIT_CLOUD_SETUP.md` for deployment instructions
+                """)
 
 st.markdown("---")
 st.markdown(

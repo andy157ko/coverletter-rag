@@ -20,6 +20,11 @@ _config = TrainingConfig()
 _LOG_DIR = Path(_config.output_dir) / _RAG_EXPERIMENT_NAME
 _BEST_MODEL_PATH = _LOG_DIR / "best_model.pt"
 
+# Option to load model from HuggingFace Hub (for Streamlit Cloud)
+# Set this to your Hub repo ID if you've uploaded the model there
+# Example: "your-username/coverletter-rag-lora"
+_MODEL_HUB_REPO = os.getenv("MODEL_HUB_REPO", None)
+
 _INDEX_PATH = Path("data/embeddings/faiss_index.bin")
 _METADATA_PATH = Path("data/embeddings/metadata.jsonl")
 
@@ -193,13 +198,36 @@ def _init_rag_pipeline():
     )
 
     #Loading fine-tuned weights
-    if not _BEST_MODEL_PATH.exists():
-        raise FileNotFoundError(
-            f"Could not find {_BEST_MODEL_PATH}. "
-            "Make sure you ran src/train.py with config_name='rag_lora'."
-        )
-
-    state_dict = torch.load(_BEST_MODEL_PATH, map_location="cpu")
+    # Try to load from HuggingFace Hub first (for Streamlit Cloud), then local file
+    if _MODEL_HUB_REPO:
+        try:
+            from huggingface_hub import hf_hub_download
+            print(f"Loading model from HuggingFace Hub: {_MODEL_HUB_REPO}")
+            model_file = hf_hub_download(
+                repo_id=_MODEL_HUB_REPO,
+                filename="best_model.pt",
+                token=_HF_TOKEN,
+            )
+            state_dict = torch.load(model_file, map_location="cpu")
+            print("✅ Model loaded from HuggingFace Hub")
+        except Exception as e:
+            print(f"Failed to load from Hub: {e}")
+            print("Falling back to local file...")
+            if not _BEST_MODEL_PATH.exists():
+                raise FileNotFoundError(
+                    f"Could not find model locally ({_BEST_MODEL_PATH}) or on Hub ({_MODEL_HUB_REPO}). "
+                    "Make sure you've uploaded the model to HuggingFace Hub or trained it locally."
+                )
+            state_dict = torch.load(_BEST_MODEL_PATH, map_location="cpu")
+    else:
+        if not _BEST_MODEL_PATH.exists():
+            raise FileNotFoundError(
+                f"Could not find {_BEST_MODEL_PATH}. "
+                "Make sure you ran src/train.py with config_name='rag_lora', "
+                "or set MODEL_HUB_REPO environment variable to load from HuggingFace Hub."
+            )
+        state_dict = torch.load(_BEST_MODEL_PATH, map_location="cpu")
+    
     lora_model.load_state_dict(state_dict)
     lora_model.eval()  # inference mode
 

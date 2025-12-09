@@ -1,0 +1,22 @@
+{
+  "prompt_only_baseline": {
+    "rougeL": 0.0008343488236779414,
+    "job_relevance_mean": 0.1063790633249761,
+    "resume_alignment_mean": 0.0662542871935233
+  },
+  "lora_only": {
+    "rougeL": 0.29538706521264146,
+    "job_relevance_mean": 0.651009082198143,
+    "resume_alignment_mean": 0.5753738617897034
+  },
+  "rag_only": {
+    "rougeL": 0.2881070812254886,
+    "job_relevance_mean": 0.5563577538728715,
+    "resume_alignment_mean": 0.5206243312358856
+  },
+  "rag_lora": {
+    "rougeL": 0.2685691923180448,
+    "job_relevance_mean": 0.5858833323577072,
+    "resume_alignment_mean": 0.5252319754536309
+  }
+}

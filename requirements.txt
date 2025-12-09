@@ -18,3 +18,4 @@ sentencepiece
 rouge_score
 nltk
 streamlit
+huggingface_hub

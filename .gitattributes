@@ -1,2 +1,4 @@
 *.pt filter=lfs diff=lfs merge=lfs -text
 data/embeddings/*.bin filter=lfs diff=lfs merge=lfs -text
+experiments/logs/rag_lora/best_model.pt filter=lfs diff=lfs merge=lfs -text
+data/embeddings/*.jsonl filter=lfs diff=lfs merge=lfs -text
