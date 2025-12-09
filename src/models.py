@@ -24,7 +24,7 @@ def apply_lora(model, r: int, alpha: int, dropout: float):
         lora_alpha=alpha,
         lora_dropout=dropout,
         bias="none",
-        task_type="SEQ_2_SEQ_LM",  # or "CAUSAL_LM" depending on your model
+        task_type="SEQ_2_SEQ_LM",  
     )
     lora_model = get_peft_model(model, lora_config)
     return lora_model

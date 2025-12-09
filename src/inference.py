@@ -29,7 +29,7 @@ _HF_TOKEN = os.getenv("HUGGINGFACE_TOKEN", None)
 
 
 
-_rag_pipeline = None  # will be initialized on first call
+_rag_pipeline = None  
 
 
 def _load_metadata(metadata_path: Path):
@@ -172,7 +172,7 @@ def _init_rag_pipeline():
     if _rag_pipeline is not None:
         return _rag_pipeline
 
-    # 1) Load tokenizer and base model
+    #Loading tokenizer and base model
     tokenizer_name = _config.model_name
     tokenizer = AutoTokenizer.from_pretrained(
         tokenizer_name,
@@ -184,7 +184,7 @@ def _init_rag_pipeline():
         is_seq2seq=True,  # our fine-tuned model is seq2seq (T5-style)
     )
 
-    # 2) Apply LoRA configuration (same as in training)
+    # Applying LoRA configuration (same as in training)
     lora_model = apply_lora(
         base_model,
         r=_config.lora_r,
@@ -192,7 +192,7 @@ def _init_rag_pipeline():
         dropout=_config.lora_dropout,
     )
 
-    # 3) Load fine-tuned weights
+    #Loading fine-tuned weights
     if not _BEST_MODEL_PATH.exists():
         raise FileNotFoundError(
             f"Could not find {_BEST_MODEL_PATH}. "
@@ -203,7 +203,7 @@ def _init_rag_pipeline():
     lora_model.load_state_dict(state_dict)
     lora_model.eval()  # inference mode
 
-    # ---- NEW: sanity-check LoRA presence ----
+    #sanity-check LoRA presence
     lora_param_names = [n for n, _ in lora_model.named_parameters() if "lora" in n.lower()]
     print(f"[DEBUG] LoRA model loaded from {_BEST_MODEL_PATH}")
     print(f"[DEBUG] Found {len(lora_param_names)} LoRA parameter tensors.")
@@ -220,7 +220,7 @@ def _init_rag_pipeline():
     index = faiss.read_index(str(_INDEX_PATH))
     metadata_store = _load_metadata(_METADATA_PATH)
 
-    # 5) Build RAG pipeline
+    #Building RAG pipeline
     _rag_pipeline = RAGPipeline(
         generator=lora_model,
         tokenizer_name=tokenizer_name,
@@ -239,7 +239,7 @@ def generate_rag_lora_model(resume_text: str, job_text: str) -> str:
     This is the main entry point used by scripts/evaluate_models.py.
     """
     pipeline = _init_rag_pipeline()
-    # k = number of retrieved examples; adjust if you like
+    # k = number of retrieved examples
     return pipeline.generate(
         resume_text,
         job_text,

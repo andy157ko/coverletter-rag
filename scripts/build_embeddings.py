@@ -31,7 +31,7 @@ def main():
     EMB_DIR.mkdir(parents=True, exist_ok=True)
     faiss.write_index(index, str(EMB_DIR / "faiss_index.bin"))
 
-    # Save metadata to look up examples at retrieval time
+    #Save metadata to look up examples at retrieval time
     with (EMB_DIR / "metadata.jsonl").open("w") as f:
         for r in records:
             f.write(json.dumps(r) + "\n")

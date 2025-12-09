@@ -20,7 +20,6 @@ from typing import Callable, Dict, List, Tuple
 
 import sys
 
-# --- Make sure repo root (which contains `src/`) is on sys.path ---
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -30,7 +29,7 @@ from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
 import evaluate  # pip install evaluate
 
-# ====== PATHS ======
+#paths
 PROC_DIR = Path("data/processed")
 RESULTS_DIR = Path("experiments/results")
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -39,20 +38,19 @@ METRICS_PATH = RESULTS_DIR / "metrics.json"
 ABLATION_PATH = RESULTS_DIR / "ablation_results.json"
 QUAL_EXAMPLES_PATH = RESULTS_DIR / "qualitative_examples.json"
 
-# ====== IMPORT YOUR GENERATORS HERE ======
+#importing generation
 from src.baselines import (
     generate_template_baseline,
     generate_prompt_only_baseline,
 )
 from src.inference import (
     generate_rag_lora_model,
-    generate_lora_only_model,   # LoRA without RAG  (you implement in src/inference.py)
-    generate_rag_only_model,    # RAG without LoRA  (you implement in src/inference.py)
+    generate_lora_only_model,   # LoRA without RAG 
+    generate_rag_only_model,    # RAG without LoRA 
 )
 
 
-# ====== DATA LOADING & UTILITIES ======
-
+#Loading data
 def load_test_data(path: Path) -> List[Dict]:
     """Load JSONL test set produced by build_original_dataset.py"""
     records = []
@@ -81,23 +79,23 @@ def parse_job_and_resume(input_text: str) -> Tuple[str, str]:
     resume_text = ""
 
     try:
-        # Split after "JOB DESCRIPTION:\n"
+        #Split after "JOB DESCRIPTION:\n"
         after_job = input_text.split("JOB DESCRIPTION:\n", 1)[1]
 
-        # job_text ends right before "\n\nRESUME:\n"
+        #job_text ends right before "\n\nRESUME:\n"
         job_text_part, after_resume_marker = after_job.split("\n\nRESUME:\n", 1)
         job_text = job_text_part.strip()
 
-        # resume_text ends before the next "\n\nWrite" (instructions)
+        #resume_text ends before the next "\n\nWrite" (instructions)
         if "\n\nWrite" in after_resume_marker:
             resume_text_part, _ = after_resume_marker.split("\n\nWrite", 1)
         else:
-            # Fallback if format slightly differs
+            #Fallback if format slightly differs
             resume_text_part = after_resume_marker
         resume_text = resume_text_part.strip()
     except Exception:
-        # If parsing fails for any reason, just return empty strings;
-        # downstream metrics will treat them as low-similarity.
+        #If parsing fails for any reason, just return empty strings;
+        #downstream metrics will treat them as low-similarity.
         job_text = ""
         resume_text = ""
 
@@ -141,23 +139,23 @@ def evaluate_system(
 
         job_text, resume_text = parse_job_and_resume(input_prompt)
 
-        # Generate with the given system (API expects resume_text, job_text)
+        #Generate with the given system (API expects resume_text, job_text)
         gen_letter = generator_fn(resume_text, job_text)
 
-        # 1) ROUGE-L
+        #ROUGE-L
         all_rouge_preds.append(gen_letter)
         all_rouge_refs.append(ref_letter)
 
-        # 2) Job relevance: sim(gen, job_text)
+        #Job relevance: sim(gen, job_text)
         emb_gen = embed_model.encode(gen_letter, convert_to_numpy=True)
         emb_job = embed_model.encode(job_text, convert_to_numpy=True)
         job_relevance_scores.append(cosine_sim(emb_gen, emb_job))
 
-        # 3) Resume alignment: sim(gen, resume_text)
+        #Resume alignment: sim(gen, resume_text)
         emb_resume = embed_model.encode(resume_text, convert_to_numpy=True)
         resume_alignment_scores.append(cosine_sim(emb_gen, emb_resume))
 
-    # Compute ROUGE-L
+    #Compute ROUGE-L
     rouge_result = rouge_metric.compute(
         predictions=all_rouge_preds,
         references=all_rouge_refs,
@@ -216,14 +214,12 @@ def collect_qualitative_examples(
     return examples
 
 
-# ====== MAIN ======
-
 def main():
-    # === FAST MODE CONFIG ===
-    FAST_MODE = True             # set False for final full evaluation
-    MAX_EXAMPLES = 50            # how many examples to use in FAST mode
+    #fast mode
+    FAST_MODE = True             
+    MAX_EXAMPLES = 50            
 
-    # 1) Load data
+    #Loading data
     test_path = PROC_DIR / "test.jsonl"
     records = load_test_data(test_path)
     print(f"Loaded {len(records)} test examples from {test_path}")
@@ -232,24 +228,24 @@ def main():
         records = records[:MAX_EXAMPLES]
         print(f"[FAST MODE] Using only first {len(records)} examples")
 
-    # 2) Load metrics + embedding tools
+    #Loading metrics + embedding tools
     rouge_metric = evaluate.load("rouge")
     embed_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-    # 3) Define systems we might evaluate
+    #Defining systems we might evaluate
     systems: Dict[str, Callable[[str, str], str]] = {
         "template_baseline": generate_template_baseline,
         "prompt_only_baseline": generate_prompt_only_baseline,
         "rag_lora": generate_rag_lora_model,
     }
 
-    # Add ablation variants if imported properly
+    #Adding ablation variants if imported properly
     if generate_lora_only_model is not None:
         systems["lora_only"] = generate_lora_only_model
     if generate_rag_only_model is not None:
         systems["rag_only"] = generate_rag_only_model
 
-    # 4) Load existing metrics (so we skip re-running them)
+    #Loading existing metrics (so we skip re-running them)
     existing_results: Dict[str, Dict] = {}
     if METRICS_PATH.exists():
         with METRICS_PATH.open() as f:
@@ -258,7 +254,7 @@ def main():
 
     all_results: Dict[str, Dict] = dict(existing_results)
 
-    # 5) Run only missing systems
+    #Running only missing systems
     for name, fn in systems.items():
         if name in existing_results:
             print(f"Skipping {name} (already in metrics.json)")
@@ -269,12 +265,12 @@ def main():
         print(f"Results for {name}: {metrics}")
         all_results[name] = metrics
 
-    # 6) Save merged metrics
+    #Saving merged metrics
     with METRICS_PATH.open("w") as f:
         json.dump(all_results, f, indent=2)
     print(f"\nSaved merged system metrics to {METRICS_PATH}")
 
-    # 7) Build ablation results (only 4 systems)
+    #Building ablation results (only 4 systems)
     ablation_candidates = ["prompt_only_baseline", "lora_only", "rag_only", "rag_lora"]
     ablation_results = {
         name: all_results[name]
@@ -286,7 +282,7 @@ def main():
         json.dump(ablation_results, f, indent=2)
     print(f"Saved ablation results to {ABLATION_PATH}")
 
-    # 8) Qualitative examples (only for rag_lora)
+    #Qualitative examples 
     if "rag_lora" in systems:
         qual_examples = collect_qualitative_examples(
             system_name="rag_lora",

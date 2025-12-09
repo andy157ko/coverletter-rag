@@ -26,11 +26,11 @@ def extract_title_and_company(job_text: str) -> Tuple[str, str]:
     skip_phrases = {"about the job", "introduction"}
     filtered = [l for l in lines if l.lower() not in skip_phrases]
 
-    # 1) Title guess: first non-generic line
+    #Title guess: first non-generic line
     if filtered:
         title = filtered[0]
 
-    # 2) Company guess: look for IBM or other company-like patterns
+    #Company guess: look for company-like patterns
     for line in lines[:6]:
         if re.search(r"\bIBM\b", line):
             company = "IBM"
@@ -77,7 +77,7 @@ def extract_resume_bullets(resume_text: str, max_bullets: int = 8) -> List[str]:
         else:
             if len(stripped.split()) < 5:
                 continue
-            # Only treat as candidate if in a “good” section
+            #Only treat as candidate if in a “good” section
             if current_section == "":
                 continue
             candidate = stripped
@@ -202,17 +202,13 @@ def build_rule_based_letter(
     return f"{opening}\n\n{body}\n\n{closing}"
 
 
-# -------------------------------------------------------------------
-# RAG Pipeline
-# -------------------------------------------------------------------
-
 class RAGPipeline:
     def __init__(self, generator, tokenizer_name: str, embed_model_name: str, index, metadata_store):
         self.generator = generator
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_fast=False)
         self.embed_model = SentenceTransformer(embed_model_name)
-        self.index = index  # FAISS or similar
-        self.metadata_store = metadata_store  # list[dict], one per training example
+        self.index = index  #FAISS or similar
+        self.metadata_store = metadata_store  #list[dict], one per training example
 
     def embed_query(self, text: str) -> np.ndarray:
         return self.embed_model.encode([text])[0]
@@ -229,10 +225,10 @@ class RAGPipeline:
         a query embedding (job_text + resume_text).
         """
 
-        # 1) Build candidate chunks
+        #Building candidate chunks
         candidates: List[Dict] = []
 
-        # (a) Resume bullets
+        #Resume bullets
         resume_bullets = extract_resume_bullets(resume_text)
         for b in resume_bullets:
             candidates.append(
@@ -242,12 +238,12 @@ class RAGPipeline:
                 }
             )
 
-        # (b) Job description sentences
+        #Job description sentences
         job_sentences = re.split(r"(?<=[.!?])\s+", job_text.strip())
         for s in job_sentences:
             s_strip = s.strip()
             if len(s_strip.split()) < 5:
-                continue  # skip very short/noisy bits
+                continue  
             candidates.append(
                 {
                     "source": "job",
@@ -262,20 +258,20 @@ class RAGPipeline:
 
         texts = [c["text"] for c in candidates]
 
-        # 2) Embed all candidate chunks
+        #Embed all candidate chunks
         cand_embs = self.embed_model.encode(texts, convert_to_numpy=True).astype("float32")
 
-        # 3) Embed the query (resume + job together)
+        #Embed the query (resume + job together)
         query = resume_text + "\n\n" + job_text
         q_vec = self.embed_query(query).astype("float32")
 
-        # 4) Cosine similarity
-        #    cos_sim = (A·B) / (||A|| * ||B||)
+        #Cosine similarity
+        #cos_sim = (A·B) / (||A|| * ||B||)
         cand_norms = np.linalg.norm(cand_embs, axis=1) + 1e-8
         q_norm = np.linalg.norm(q_vec) + 1e-8
         sims = (cand_embs @ q_vec) / (cand_norms * q_norm)
 
-        # 5) Take top-k
+        #Take top-k
         k = min(k, len(candidates))
         top_idx = np.argsort(-sims)[:k]
 
@@ -291,7 +287,7 @@ class RAGPipeline:
             print(c["text"][:300].replace("\n", " "))
         print("================================\n")
 
-        # Return the selected candidate dicts
+        #Return the selected candidate dicts
         retrieved = [candidates[i] for i in top_idx]
         return retrieved
 
@@ -307,7 +303,7 @@ class RAGPipeline:
         job_title, job_company = extract_title_and_company(job_text)
         resume_bullets = extract_resume_bullets(resume_text)
 
-        # --- 1) Format bullets from the user's resume ---
+        #Formatting bullets from the user's resume ---
         if resume_bullets:
             bullets_text = "\n".join(f"- {b}" for b in resume_bullets)
         else:
@@ -316,11 +312,11 @@ class RAGPipeline:
                 "projects, roles, and achievements from the TARGET RESUME text."
             )
 
-        # --- 2) Split retrieved chunks into job vs resume buckets ---
+        #Splitting retrieved chunks into job vs resume buckets ---
         job_chunks = [ex["text"] for ex in retrieved_examples if ex.get("source") == "job"]
         resume_chunks = [ex["text"] for ex in retrieved_examples if ex.get("source") == "resume"]
 
-        # Keep only a few most relevant from each side for clarity
+        #Keeping only a few most relevant from each side for clarity
         job_chunks = job_chunks[:3]
         resume_chunks = resume_chunks[:4]
 
@@ -448,16 +444,16 @@ class RAGPipeline:
             print("DEBUG: Using rule-based fallback letter.")
             return build_rule_based_letter(job_title, job_company, resume_bullets)
 
-        # ---- Otherwise, lightly clean and prepend safe opening ----
-        # 1) Drop obviously risky / untrue sentences
+        #prepend safe opening
+        #Drop obviously risky / untrue sentences
         text = clean_and_filter_sentences(raw_text)
 
-        # If everything got filtered out, fall back
+        #If everything got filtered out, fall back
         if not text.strip():
             print("DEBUG: All generated sentences filtered; using rule-based fallback.")
             return build_rule_based_letter(job_title, job_company, resume_bullets)
 
-        # 2) Fix known wrong titles/companies from training artifacts
+        #Fix known wrong titles/companies from training artifacts
         if job_title:
             text = re.sub(r"\bData Scientist\b", job_title, text)
             text = re.sub(r"\bSenior Support Engineer\b", job_title, text)
@@ -468,8 +464,7 @@ class RAGPipeline:
             text = re.sub(r"\bXYZ Analytics\b", job_company, text)
             text = re.sub(r"\bInnovation Inc\b", job_company, text)
 
-        # 3) Optionally remove generic “I am writing to express my interest...”
-        #    if it might refer to the wrong role/company
+        #remove generic “I am writing to express my interest...”
         text = re.sub(
             r"I am writing to express my interest in the [^.]+?\.",
             "",
@@ -477,7 +472,7 @@ class RAGPipeline:
             flags=re.IGNORECASE,
         )
 
-        # 4) Clean prompt scaffolding and tags
+        #Clean prompt scaffolding and tags
         text = text.replace("TARGET JOB section", "role")
         text = text.replace("TARGET RESUME", "my background")
         text = re.sub(
@@ -488,18 +483,15 @@ class RAGPipeline:
         text = text.replace("[RESUME]", "").replace("[JOB]", "")
         text = text.strip()
 
-        # Remove an initial "I am a/an ..." sentence if it's redundant with the opening
+        #Remove an initial "I am a/an ..." sentence if it's redundant with the opening
         first_sentence_match = re.match(r"^I am (an|a) [^.]+?\.", text)
         if first_sentence_match:
             text = text[first_sentence_match.end():].lstrip()
 
-        # IMPORTANT: leave this commented out; it was mangling things
-        # text = text.replace(" - ", ". ")
-
-        # Drop any dangling "(" at the very end
+        #Drop any dangling "(" at the very end
         text = re.sub(r"\(\s*$", "", text).strip()
 
-        # 5) Build safe opening paragraph grounded in the job info
+        #Build safe opening paragraph grounded in the job info
         safe_opening = build_safe_opening(job_title, job_company)
 
         if text:

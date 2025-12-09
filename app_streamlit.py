@@ -15,7 +15,6 @@ if str(ROOT) not in sys.path:
 
 from src.inference import generate_rag_lora_model
 
-# Page configuration
 st.set_page_config(
     page_title="Cover Letter Generator",
     page_icon="📝",
@@ -23,7 +22,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for better styling
 st.markdown("""
     <style>
     .main-header {
@@ -39,7 +37,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Header
 st.markdown('<h1 class="main-header"> AI Cover Letter Generator</h1>', unsafe_allow_html=True)
 st.markdown("---")
 
@@ -126,7 +123,6 @@ with col_btn2:
         help="Click to generate your personalized cover letter"
     )
 
-# Generation and display
 if generate_button:
     if not resume_text.strip():
         st.error("Please paste your resume text in the left column.")
@@ -135,14 +131,11 @@ if generate_button:
     else:
         with st.spinner("Generating your cover letter... This may take 30-60 seconds."):
             try:
-                # Generate cover letter
                 cover_letter = generate_rag_lora_model(resume_text, job_text)
                 
-                # Display result
                 st.markdown("---")
                 st.subheader("Your Generated Cover Letter")
                 
-                # Text area for easy copying
                 st.text_area(
                     "Cover Letter:",
                     value=cover_letter,
@@ -150,7 +143,6 @@ if generate_button:
                     label_visibility="collapsed"
                 )
                 
-                # Download button
                 st.download_button(
                     label="Download as .txt",
                     data=cover_letter,
@@ -159,7 +151,6 @@ if generate_button:
                     use_container_width=True
                 )
                 
-                # Success message
                 st.success("Cover letter generated successfully! Review it above and make any edits you'd like.")
                 
             except FileNotFoundError as e:
@@ -168,7 +159,6 @@ if generate_button:
                 st.error(f"An error occurred while generating the cover letter:\n\n{str(e)}")
                 st.info("Make sure you've run:\n1. `python scripts/build_original_dataset.py`\n2. `python scripts/build_embeddings.py`\n3. `python src/train.py`")
 
-# Footer
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: #666;'>Built using RAG + LoRA</div>",

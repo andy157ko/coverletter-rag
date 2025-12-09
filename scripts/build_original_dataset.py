@@ -8,9 +8,7 @@ from sklearn.model_selection import train_test_split
 RAW_DIR = Path("data/raw")
 PROC_DIR = Path("data/processed")
 
-# -------------------------------------------------------------
-# BUILD JOB + RESUME TEXT FIELDS AS BEFORE
-# -------------------------------------------------------------
+
 def build_text_fields(example):
     job_parts = [
         f"Job Title: {example['Job Title']}",
@@ -28,9 +26,7 @@ def build_text_fields(example):
     resume_text = "\n".join(resume_parts)
     return job_text, resume_text
 
-# -------------------------------------------------------------
-# CONVERT INTO INSTRUCTION-TUNING FORMAT
-# -------------------------------------------------------------
+
 def build_instruction_example(job_text, resume_text, cover_letter_text):
     """
     Convert each dataset item into:
@@ -61,18 +57,14 @@ def build_instruction_example(job_text, resume_text, cover_letter_text):
         "output": cover_letter_text.strip()
     }
 
-# -------------------------------------------------------------
-# JSONL WRITER
-# -------------------------------------------------------------
+
 def write_jsonl(path, records):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w") as f:
         for r in records:
             f.write(json.dumps(r) + "\n")
 
-# -------------------------------------------------------------
-# MAIN PIPELINE
-# -------------------------------------------------------------
+
 def main():
     print("Loading HF dataset...")
     ds = load_dataset("ShashiVish/cover-letter-dataset")
@@ -93,13 +85,13 @@ def main():
         formatted = build_instruction_example(job_text, resume_text, ex["Cover Letter"])
         test_records.append(formatted)
 
-    # Split train into train/val sets
+    #Split train into train/val sets
     print("Splitting train/val...")
     train_split, val_split = train_test_split(
         train_records, test_size=0.15, random_state=42
     )
 
-    # Write outputs
+    #Write outputs
     print("Writing processed datasets...")
     PROC_DIR.mkdir(parents=True, exist_ok=True)
     write_jsonl(PROC_DIR / "train.jsonl", train_split)

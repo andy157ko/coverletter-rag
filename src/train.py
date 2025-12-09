@@ -39,7 +39,7 @@ def build_collate_fn(tokenizer, max_input_length: int, max_target_length: int):
         input_texts = [ex["input"] for ex in batch]
         target_texts = [ex["output"] for ex in batch]
 
-        # Tokenize inputs
+        #Tokenize inputs
         model_inputs = tok(
             input_texts,
             padding=True,
@@ -48,7 +48,7 @@ def build_collate_fn(tokenizer, max_input_length: int, max_target_length: int):
             return_tensors="pt",
         )
 
-        # Tokenize outputs
+        #Tokenize outputs
         with tok.as_target_tokenizer():
             labels = tok(
                 target_texts,
@@ -58,7 +58,7 @@ def build_collate_fn(tokenizer, max_input_length: int, max_target_length: int):
                 return_tensors="pt",
             )["input_ids"]
 
-        # Mask padding tokens
+        #Mask padding tokens
         labels[labels == tok.pad_token_id] = -100
 
         model_inputs["labels"] = labels
@@ -72,16 +72,16 @@ def train(config: TrainingConfig, data_config: DataConfig, config_name: str = "r
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    # 1) Tokenizer
+    #Tokenizer
     tokenizer = get_tokenizer(config.model_name)
     print(f"Loaded tokenizer: {type(tokenizer)}")
 
-    # 2) Base model + LoRA
+    #Base model + LoRA
     model = load_base_model(config.model_name, is_seq2seq=True).to(device)
     model = apply_lora(model, config.lora_r, config.lora_alpha, config.lora_dropout)
     model.train()
 
-    # 3) Dataloaders
+    #Dataloaders
     collate_fn = build_collate_fn(
         tokenizer,
         max_input_length=config.max_input_length,
@@ -96,7 +96,7 @@ def train(config: TrainingConfig, data_config: DataConfig, config_name: str = "r
         collate_fn=collate_fn,
     )
 
-    # 4) Optimizer + scheduler
+    #Optimizer + scheduler
     optimizer = AdamW(
         model.parameters(),
         lr=config.learning_rate,
@@ -110,7 +110,7 @@ def train(config: TrainingConfig, data_config: DataConfig, config_name: str = "r
         num_training_steps=total_steps,
     )
 
-    # 5) Logging
+    #Logging
     log_dir = Path(config.output_dir) / config_name
     log_dir.mkdir(parents=True, exist_ok=True)
     writer = SummaryWriter(log_dir=str(log_dir))
@@ -120,12 +120,12 @@ def train(config: TrainingConfig, data_config: DataConfig, config_name: str = "r
     patience_counter = 0
     global_step = 0
 
-    # 6) Training loop
+    #Training loop
     for epoch in range(config.num_epochs):
         model.train()
         print(f"\n=== Epoch {epoch + 1}/{config.num_epochs} ===")
 
-        step = 0  # add this
+        step = 0 
         for batch in loaders["train"]:
             step += 1
             if step % 10 == 0:
@@ -149,7 +149,7 @@ def train(config: TrainingConfig, data_config: DataConfig, config_name: str = "r
             writer.add_scalar("train/loss", loss.item(), global_step)
             global_step += 1
 
-        # Validation
+        #Validation
         model.eval()
         val_losses = []
         with torch.no_grad():
@@ -166,7 +166,7 @@ def train(config: TrainingConfig, data_config: DataConfig, config_name: str = "r
         writer.add_scalar("val/loss", val_loss, epoch)
         print(f"Epoch {epoch + 1} | val_loss = {val_loss:.4f}")
 
-        # Early stopping
+        #Early stopping
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             patience_counter = 0

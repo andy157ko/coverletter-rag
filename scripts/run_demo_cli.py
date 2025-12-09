@@ -11,7 +11,6 @@ import argparse
 from pathlib import Path
 import sys
 
-# --- Ensure repo root (which contains `src/`) is on sys.path ---
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -27,11 +26,11 @@ def load_text(path: str) -> str:
 
 
 def main(args):
-    # 1. Load raw text inputs
+    # Loading raw text
     resume_text = load_text(args.resume_path)
     job_text = load_text(args.job_path)
 
-    # 2. Call the full RAG + LoRA system
+    # Calling the full RAG + LoRA system
     cover_letter = generate_rag_lora_model(resume_text, job_text)
 
     # 3. Print result
