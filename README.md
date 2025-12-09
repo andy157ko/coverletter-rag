@@ -1,5 +1,5 @@
 # CoverLetter-RAG: Retrieval-Augmented Cover Letter Generation with LoRA-Fine-Tuned T5
-
+Live website: <https://andy157ko-coverletter-rag-app-streamlit-3e1rik.streamlit.app/>
 A retrieval-augmented machine learning system that generates personalized cover letters using a user’s resume and job description. The system fine-tunes a T5 model with LoRA, retrieves semantically similar examples with FAISS, and constructs a structured RAG prompt for high-quality, grounded cover letter generation.
 
 ---
@@ -69,7 +69,7 @@ run_streamlit.sh
 ---
 
 ## Video Links
-- Demo Video: <add link>  
+- Demo Video: <https://drive.google.com/file/d/1Ux7b5Vt6IZnc6g5OSNxsyI0djLnGnNFj/view?usp=sharing>
 - Technical Walkthrough Video: <add link>  
 ---
 
