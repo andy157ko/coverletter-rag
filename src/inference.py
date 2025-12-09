@@ -14,10 +14,6 @@ from src.models import load_base_model, apply_lora
 from src.rag_pipeline import RAGPipeline
 
 
-# -----------------------------------------------------------------------------
-# Configuration
-# -----------------------------------------------------------------------------
-
 _RAG_EXPERIMENT_NAME = "rag_lora"
 
 _config = TrainingConfig()
@@ -32,9 +28,6 @@ _EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 _HF_TOKEN = os.getenv("HUGGINGFACE_TOKEN", None)
 
 
-# -----------------------------------------------------------------------------
-# Lazy global initialization
-# -----------------------------------------------------------------------------
 
 _rag_pipeline = None  # will be initialized on first call
 
@@ -45,6 +38,129 @@ def _load_metadata(metadata_path: Path):
         for line in f:
             records.append(json.loads(line))
     return records
+
+def _init_lora_only_model():
+    """
+    Load ONLY the LoRA fine-tuned model, without
+    building the RAG retrieval index.
+    """
+    tokenizer_name = _config.model_name
+    tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_name,
+        use_auth_token=_HF_TOKEN if _HF_TOKEN else None
+    )
+
+    base_model = load_base_model(
+        tokenizer_name,
+        is_seq2seq=True,
+    )
+
+    lora_model = apply_lora(
+        base_model,
+        r=_config.lora_r,
+        alpha=_config.lora_alpha,
+        dropout=_config.lora_dropout,
+    )
+
+    if not _BEST_MODEL_PATH.exists():
+        raise FileNotFoundError(
+            f"Could not find {_BEST_MODEL_PATH}. Run training first."
+        )
+
+    state_dict = torch.load(_BEST_MODEL_PATH, map_location="cpu")
+    lora_model.load_state_dict(state_dict)
+    lora_model.eval()
+
+    return tokenizer, lora_model
+
+
+_lora_only_cache = None
+
+
+def generate_lora_only_model(resume_text: str, job_text: str) -> str:
+    """
+    Use ONLY the LoRA fine-tuned seq2seq model.
+    No retrieval, no RAG context.
+    """
+    global _lora_only_cache
+
+    if _lora_only_cache is None:
+        _lora_only_cache = _init_lora_only_model()
+
+    tokenizer, model = _lora_only_cache
+
+    prompt = (
+        "You are an expert career coach helping students apply to jobs.\n"
+        "Write a personalized cover letter.\n\n"
+        f"TARGET JOB:\n{job_text}\n\n"
+        f"TARGET RESUME:\n{resume_text}\n\n"
+        "Cover letter:\n"
+    )
+
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True)
+
+    with torch.no_grad():
+        output = model.generate(
+            **inputs,
+            max_new_tokens=_config.max_target_length,
+            num_beams=4,
+        )
+
+    return tokenizer.decode(output[0], skip_special_tokens=True)
+
+def _init_rag_only_pipeline():
+    """
+    Build a RAG pipeline using the base pretrained model WITHOUT LoRA weights.
+    """
+    tokenizer_name = _config.model_name
+    tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_name,
+        use_auth_token=_HF_TOKEN if _HF_TOKEN else None,
+    )
+
+    base_model = load_base_model(
+        tokenizer_name,
+        is_seq2seq=True,
+    )
+    base_model.eval()
+
+    # Load FAISS + metadata
+    if not _INDEX_PATH.exists():
+        raise FileNotFoundError("FAISS index missing. Run build_embeddings.py.")
+
+    index = faiss.read_index(str(_INDEX_PATH))
+    metadata_store = _load_metadata(_METADATA_PATH)
+
+    # Build RAG pipeline WITH base model (no LoRA)
+    rag_only_pipe = RAGPipeline(
+        generator=base_model,
+        tokenizer_name=tokenizer_name,
+        embed_model_name=_EMBED_MODEL_NAME,
+        index=index,
+        metadata_store=metadata_store,
+    )
+
+    return rag_only_pipe
+
+
+_rag_only_cache = None
+
+
+def generate_rag_only_model(resume_text: str, job_text: str) -> str:
+    """
+    Use RAG retrieval but NO LoRA fine-tuning.
+    """
+    global _rag_only_cache
+
+    if _rag_only_cache is None:
+        _rag_only_cache = _init_rag_only_pipeline()
+
+    return _rag_only_cache.generate(
+        resume_text,
+        job_text,
+        k=5,  # same retrieval count for fair comparison
+        max_new_tokens=_config.max_target_length,
+    )
 
 
 def _init_rag_pipeline():

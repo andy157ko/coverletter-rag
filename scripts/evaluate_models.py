@@ -9,8 +9,9 @@ on the processed test set, using:
 - Resume alignment (cosine similarity between generated letter and resume)
 
 Outputs:
-- experiments/results/metrics.json              (system-level metrics)
-- experiments/results/qualitative_examples.json (sampled examples for error analysis)
+- experiments/results/metrics.json               (system-level metrics, all systems)
+- experiments/results/ablation_results.json      (subset for RAG/LoRA ablation)
+- experiments/results/qualitative_examples.json  (sampled examples for error analysis)
 """
 
 import json
@@ -35,6 +36,7 @@ RESULTS_DIR = Path("experiments/results")
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 METRICS_PATH = RESULTS_DIR / "metrics.json"
+ABLATION_PATH = RESULTS_DIR / "ablation_results.json"
 QUAL_EXAMPLES_PATH = RESULTS_DIR / "qualitative_examples.json"
 
 # ====== IMPORT YOUR GENERATORS HERE ======
@@ -42,7 +44,11 @@ from src.baselines import (
     generate_template_baseline,
     generate_prompt_only_baseline,
 )
-from src.inference import generate_rag_lora_model
+from src.inference import (
+    generate_rag_lora_model,
+    generate_lora_only_model,   # LoRA without RAG  (you implement in src/inference.py)
+    generate_rag_only_model,    # RAG without LoRA  (you implement in src/inference.py)
+)
 
 
 # ====== DATA LOADING & UTILITIES ======
@@ -123,11 +129,11 @@ def evaluate_system(
       ex["output"] = reference cover letter
     """
 
-    all_rouge_preds = []
-    all_rouge_refs = []
+    all_rouge_preds: List[str] = []
+    all_rouge_refs: List[str] = []
 
-    job_relevance_scores = []
-    resume_alignment_scores = []
+    job_relevance_scores: List[float] = []
+    resume_alignment_scores: List[float] = []
 
     for ex in tqdm(records, desc=f"Evaluating {name}"):
         input_prompt = ex["input"]
@@ -189,7 +195,7 @@ def collect_qualitative_examples(
         return []
 
     sampled = random.sample(records, k=min(num_examples, len(records)))
-    examples = []
+    examples: List[Dict] = []
 
     for ex in sampled:
         input_prompt = ex["input"]
@@ -213,48 +219,88 @@ def collect_qualitative_examples(
 # ====== MAIN ======
 
 def main():
+    # === FAST MODE CONFIG ===
+    FAST_MODE = True             # set False for final full evaluation
+    MAX_EXAMPLES = 50            # how many examples to use in FAST mode
+
     # 1) Load data
     test_path = PROC_DIR / "test.jsonl"
     records = load_test_data(test_path)
     print(f"Loaded {len(records)} test examples from {test_path}")
 
+    if FAST_MODE:
+        records = records[:MAX_EXAMPLES]
+        print(f"[FAST MODE] Using only first {len(records)} examples")
+
     # 2) Load metrics + embedding tools
     rouge_metric = evaluate.load("rouge")
     embed_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-    # 3) Define systems to evaluate
+    # 3) Define systems we might evaluate
     systems: Dict[str, Callable[[str, str], str]] = {
         "template_baseline": generate_template_baseline,
         "prompt_only_baseline": generate_prompt_only_baseline,
         "rag_lora": generate_rag_lora_model,
     }
 
-    all_results: Dict[str, Dict] = {}
+    # Add ablation variants if imported properly
+    if generate_lora_only_model is not None:
+        systems["lora_only"] = generate_lora_only_model
+    if generate_rag_only_model is not None:
+        systems["rag_only"] = generate_rag_only_model
 
+    # 4) Load existing metrics (so we skip re-running them)
+    existing_results: Dict[str, Dict] = {}
+    if METRICS_PATH.exists():
+        with METRICS_PATH.open() as f:
+            existing_results = json.load(f)
+        print(f"Found existing metrics for systems: {list(existing_results.keys())}")
+
+    all_results: Dict[str, Dict] = dict(existing_results)
+
+    # 5) Run only missing systems
     for name, fn in systems.items():
+        if name in existing_results:
+            print(f"Skipping {name} (already in metrics.json)")
+            continue
+
         print(f"\n=== Evaluating system: {name} ===")
         metrics = evaluate_system(name, fn, records, rouge_metric, embed_model)
         print(f"Results for {name}: {metrics}")
         all_results[name] = metrics
 
-    # 4) Save system-level metrics to metrics.json
+    # 6) Save merged metrics
     with METRICS_PATH.open("w") as f:
         json.dump(all_results, f, indent=2)
-    print(f"\nSaved system metrics to {METRICS_PATH}")
+    print(f"\nSaved merged system metrics to {METRICS_PATH}")
 
-    # 5) Collect qualitative examples for error analysis (e.g. final model only)
-    qual_examples = collect_qualitative_examples(
-        system_name="rag_lora",
-        generator_fn=systems["rag_lora"],
-        records=records,
-        num_examples=5,
-    )
+    # 7) Build ablation results (only 4 systems)
+    ablation_candidates = ["prompt_only_baseline", "lora_only", "rag_only", "rag_lora"]
+    ablation_results = {
+        name: all_results[name]
+        for name in ablation_candidates
+        if name in all_results
+    }
 
-    with QUAL_EXAMPLES_PATH.open("w") as f:
-        json.dump(qual_examples, f, indent=2)
+    with ABLATION_PATH.open("w") as f:
+        json.dump(ablation_results, f, indent=2)
+    print(f"Saved ablation results to {ABLATION_PATH}")
 
-    print(f"Saved qualitative examples to {QUAL_EXAMPLES_PATH}")
+    # 8) Qualitative examples (only for rag_lora)
+    if "rag_lora" in systems:
+        qual_examples = collect_qualitative_examples(
+            system_name="rag_lora",
+            generator_fn=systems["rag_lora"],
+            records=records,
+            num_examples=5,
+        )
 
+        with QUAL_EXAMPLES_PATH.open("w") as f:
+            json.dump(qual_examples, f, indent=2)
+
+        print(f"Saved qualitative examples to {QUAL_EXAMPLES_PATH}")
+    else:
+        print("rag_lora missing — skipping qualitative examples.")
 
 if __name__ == "__main__":
     main()
